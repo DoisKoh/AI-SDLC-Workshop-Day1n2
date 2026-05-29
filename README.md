@@ -135,8 +135,42 @@ These need a person with the relevant accounts — everything else (code, tests,
 1. **Create a Railway account** and project at https://railway.app, then connect this GitHub repo (or `railway up` from the CLI).
 2. **Add a Volume** in Railway, mount it (e.g. at `/app/data`), and set `DATABASE_PATH=/app/data/todos.db` so data persists across deploys.
 3. **Set environment variables** in Railway: `JWT_SECRET` (random 32+ chars), `RP_ID` (your Railway domain), `RP_NAME`, `RP_ORIGIN` (full `https://…` URL).
-4. **Seed holidays in production** once: run `npm run seed` via a Railway one-off command (with `DATABASE_PATH` pointing at the volume), or trigger it from a deploy hook.
+4. **Holidays** seed automatically on first startup (no action needed); `npm run seed` is available for an explicit re-seed.
 5. **(Optional) Custom domain:** add it in Railway, update DNS, and update `RP_ID` / `RP_ORIGIN` to the new domain.
-6. **(GitHub) Push & PR:** the working tree is committed locally on demand only — if you want CI/PR review, push the branch and open a PR (requires your GitHub auth).
+6. **(GitHub) Push & PR:** push the branch and open a PR if you want CI/PR review (requires your GitHub auth).
 
 After deploying, verify: register a passkey on the production domain, create/complete a recurring todo, and confirm data survives a redeploy.
+
+---
+
+## API Reference
+
+All routes return `{ success, data?, error? }` (except the export route, which streams a file). Every route requires an authenticated session except the auth endpoints. IDs are scoped to the session user.
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| POST | `/api/auth/register-options` · `/register-verify` | WebAuthn registration ceremony |
+| POST | `/api/auth/login-options` · `/login-verify` | WebAuthn login ceremony |
+| POST | `/api/auth/logout` · GET `/api/auth/me` | End session · current user |
+| GET·POST | `/api/todos` | List · create todos |
+| GET·PUT·DELETE | `/api/todos/[id]` | Read · update (handles recurring completion) · delete |
+| POST | `/api/todos/[id]/subtasks` | Add a subtask |
+| PUT·DELETE | `/api/subtasks/[id]` | Update · delete a subtask |
+| POST·DELETE | `/api/todos/[id]/tags` | Set · remove a todo's tags |
+| GET·POST | `/api/tags` · PUT·DELETE `/api/tags/[id]` | Tag CRUD |
+| GET·POST | `/api/templates` · PUT·DELETE `/api/templates/[id]` | Template CRUD |
+| POST | `/api/templates/[id]/use` | Instantiate a todo from a template |
+| GET | `/api/todos/export?format=json\|csv` | Export (file download) |
+| POST | `/api/todos/import` | Import todos (atomic, ID-remapped) |
+| POST | `/api/notifications/check` | Return + mark due reminders |
+| GET | `/api/holidays?from&to` | Singapore public holidays |
+
+## Known Limitations
+
+- **Cross-browser WebAuthn:** automated E2E for the passkey flows is Chromium-only because Playwright's virtual authenticator is CDP-only. Firefox/WebKit/mobile are covered for the non-auth UI via the cross-browser smoke; real passkey use across browsers should be checked manually (it works on any WebAuthn-capable browser).
+- **SQLite single-writer:** fine for the single-process Railway deployment; a multi-instance setup would need a client/server database.
+- No CSP, rate-limiting, or monitoring yet (all optional per the evaluation rubric).
+
+## Changelog
+
+- **1.0.0** — Initial release: all 11 features (auth, CRUD, priority, recurring, reminders, subtasks, tags, templates, search/filtering, export/import, calendar), 71 unit + 31 E2E tests, Railway deployment with persistent SQLite volume, automatic Singapore-holiday seeding, dark mode, and security headers.

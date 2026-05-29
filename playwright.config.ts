@@ -41,6 +41,17 @@ export default defineConfig({
       use: { ...devices['Desktop Safari'] },
       testMatch: /cross-browser\.spec\.ts/,
     },
+    // Mobile viewports (Chromium- and WebKit-based) for the cross-browser smoke.
+    {
+      name: 'mobile-chrome',
+      use: { ...devices['Pixel 5'] },
+      testMatch: /cross-browser\.spec\.ts/,
+    },
+    {
+      name: 'mobile-safari',
+      use: { ...devices['iPhone 12'] },
+      testMatch: /cross-browser\.spec\.ts/,
+    },
   ],
   webServer: {
     // The app auto-seeds holidays on first startup (lib/db/connection.ts).
