@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { FilterState } from '@/lib/filtering'
+import { useDebounce } from '@/lib/hooks/useDebounce'
 import type { FilterPreset } from '@/lib/presets'
 import { TID } from '@/lib/testids'
 import type { Priority, Tag } from '@/lib/types'
@@ -32,23 +33,50 @@ export function SearchFilterBar({
 }: SearchFilterBarProps) {
   const [advancedOpen, setAdvancedOpen] = useState(false)
 
+  // The text input updates instantly; the actual filter is applied 300ms after
+  // the user stops typing. A ref tracks the last value we pushed so external
+  // resets (Clear All / applying a preset) sync back without a feedback loop.
+  const [localSearch, setLocalSearch] = useState(filters.search)
+  const debouncedSearch = useDebounce(localSearch, 300)
+  const lastPushed = useRef(filters.search)
+
+  useEffect(() => {
+    if (debouncedSearch !== lastPushed.current) {
+      lastPushed.current = debouncedSearch
+      setFilter({ search: debouncedSearch })
+    }
+  }, [debouncedSearch, setFilter])
+
+  useEffect(() => {
+    if (filters.search !== lastPushed.current) {
+      lastPushed.current = filters.search
+      setLocalSearch(filters.search)
+    }
+  }, [filters.search])
+
+  const clearSearch = () => {
+    lastPushed.current = ''
+    setLocalSearch('')
+    setFilter({ search: '' })
+  }
+
   return (
     <div className="rounded-xl bg-white p-4 shadow-sm dark:bg-gray-800">
       <div className="relative">
         <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
         <input
           type="text"
-          value={filters.search}
-          onChange={(e) => setFilter({ search: e.target.value })}
+          value={localSearch}
+          onChange={(e) => setLocalSearch(e.target.value)}
           placeholder="Search todos, subtasks, and tags…"
           className={`${inputCls} pl-9 pr-9`}
           data-testid={TID.searchInput}
           aria-label="Search todos"
         />
-        {filters.search && (
+        {localSearch && (
           <button
             type="button"
-            onClick={() => setFilter({ search: '' })}
+            onClick={clearSearch}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
             data-testid={TID.searchClear}
             aria-label="Clear search"

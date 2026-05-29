@@ -25,9 +25,21 @@ export default defineConfig({
     timezoneId: 'Asia/Singapore',
   },
   projects: [
+    // Chromium runs the full suite (WebAuthn virtual authenticator is CDP-only).
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+    },
+    // Firefox + WebKit run the non-auth cross-browser smoke only.
+    {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] },
+      testMatch: /cross-browser\.spec\.ts/,
+    },
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
+      testMatch: /cross-browser\.spec\.ts/,
     },
   ],
   webServer: {
