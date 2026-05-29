@@ -55,12 +55,13 @@ function dayEndMs(key: string): number | null {
 }
 
 export function matchesFilters(todo: Todo, filters: FilterState): boolean {
-  // Search: title OR any subtask title (case-insensitive, partial).
+  // Search: title OR any subtask title OR any tag name (case-insensitive, partial).
   const query = filters.search.trim().toLowerCase()
   if (query) {
     const inTitle = todo.title.toLowerCase().includes(query)
     const inSubtasks = todo.subtasks.some((s) => s.title.toLowerCase().includes(query))
-    if (!inTitle && !inSubtasks) return false
+    const inTags = todo.tags.some((t) => t.name.toLowerCase().includes(query))
+    if (!inTitle && !inSubtasks && !inTags) return false
   }
 
   if (filters.priority !== 'all' && todo.priority !== filters.priority) return false

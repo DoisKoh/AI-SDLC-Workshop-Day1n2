@@ -25,6 +25,12 @@ describe('matchesFilters', () => {
     expect(matchesFilters(todo, filters({ search: 'report' }))).toBe(true)
   })
 
+  it('matches by tag name', () => {
+    const todo = makeTodo({ title: 'Project Alpha', tags: [makeTag({ name: 'urgent' })] })
+    expect(matchesFilters(todo, filters({ search: 'urge' }))).toBe(true)
+    expect(matchesFilters(todo, filters({ search: 'nope' }))).toBe(false)
+  })
+
   it('filters by priority', () => {
     const todo = makeTodo({ priority: 'high' })
     expect(matchesFilters(todo, filters({ priority: 'high' }))).toBe(true)

@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3'
 import fs from 'node:fs'
 import path from 'node:path'
+import { SINGAPORE_HOLIDAYS } from '../holidays-data'
 
 /**
  * Resolve the SQLite file location. Prefers an explicit DATABASE_PATH, then a
@@ -115,7 +116,23 @@ function createConnection(): DbConnection {
   db.pragma('foreign_keys = ON')
   db.pragma('busy_timeout = 5000')
   db.exec(SCHEMA)
+  seedHolidaysIfEmpty(db)
   return db
+}
+
+/**
+ * Seed Singapore public holidays on first use if the table is empty. Runs in
+ * compiled code (no tsx) so production gets holidays automatically on startup;
+ * idempotent — skips once any holidays exist.
+ */
+function seedHolidaysIfEmpty(db: DbConnection): void {
+  const { count } = db.prepare('SELECT COUNT(*) AS count FROM holidays').get() as { count: number }
+  if (count > 0) return
+  const insert = db.prepare('INSERT OR IGNORE INTO holidays (date, name) VALUES (?, ?)')
+  const seed = db.transaction((rows: { date: string; name: string }[]) => {
+    for (const h of rows) insert.run(h.date, h.name)
+  })
+  seed(SINGAPORE_HOLIDAYS)
 }
 
 /**

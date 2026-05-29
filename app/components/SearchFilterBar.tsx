@@ -40,7 +40,7 @@ export function SearchFilterBar({
           type="text"
           value={filters.search}
           onChange={(e) => setFilter({ search: e.target.value })}
-          placeholder="Search todos and subtasks…"
+          placeholder="Search todos, subtasks, and tags…"
           className={`${inputCls} pl-9 pr-9`}
           data-testid={TID.searchInput}
           aria-label="Search todos"

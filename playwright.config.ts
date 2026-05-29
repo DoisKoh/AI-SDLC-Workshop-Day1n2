@@ -31,8 +31,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    // Seed Singapore holidays into the isolated test DB, then start the app.
-    command: `npm run seed && npm run dev -- -p ${PORT}`,
+    // The app auto-seeds holidays on first startup (lib/db/connection.ts).
+    command: `npm run dev -- -p ${PORT}`,
     url: BASE_URL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
